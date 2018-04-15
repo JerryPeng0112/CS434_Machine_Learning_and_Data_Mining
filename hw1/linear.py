@@ -1,5 +1,4 @@
 import numpy as np
-import os
 
 """
 Linear Regression Training
@@ -7,11 +6,11 @@ Linear Regression Training
 
 def main():
     # Linear regression with dummy variable
-    print "====== With Dummy Variable ======"
+    print "====== With Dummy Variable ======\n"
     w = train(True)
     calcASE(w, True)
     # Linear regression without dummy variable
-    print "====== Without Dummy Variable ======"
+    print "====== Without Dummy Variable ======\n"
     w = train(False)
     calcASE(w, False)
 
