@@ -1,141 +1,75 @@
 import numpy as np
-from numpy.linalg import inv
+import os
 
-def linearRegressionTraining():
-	file = open("housing_train.txt", "r")
-	fileStr = file.read()
-	file.close()
-	fileStrs = fileStr.split('\n')
+"""
+Linear Regression Training
+"""
 
-	#clear empty lines
-	fileStrs = [elem for elem in fileStrs if elem != ""]
-			
-	# clear empty strings
-	X = []
-	Y = []
-	for i in fileStrs:
-		tempDataStr = i.split(" ")
-		tempDataStr = [float(elem) for elem in tempDataStr if elem != ""]
-		X.append([1] + tempDataStr[0:-1])
-		Y.append(tempDataStr[-1])
-
-	X = np.matrix(X)
-	Y = np.transpose(np.matrix(Y))
-	Xt = np.transpose(X)
-	XtX = np.matmul(Xt,X)
-	XtXinv = inv(XtX)
-	XtY = np.matmul(Xt, Y)
-	w = np.matmul(XtXinv, XtY)
-	print "Weight vectors:"
-	print w
-	return w
-
-def calcTrainingSSE(w):
-	files = ["housing_train.txt", "housing_test.txt"]
-	w = np.transpose(w)
-	for index in range(2):
-		file = open(files[index], "r")
-		fileStr = file.read()
-		fileStrs = fileStr.split('\n')
-		
-		#clear empty lines
-		fileStrs = [elem for elem in fileStrs if elem != ""]
-		
-		# clear empty strings
-		X = []
-		Y = []
-		for i in fileStrs:
-			tempDataStr = i.split(" ")
-			tempDataStr = [float(elem) for elem in tempDataStr if elem != ""]
-			X.append([1] + tempDataStr[0:-1])
-			Y.append(tempDataStr[-1])
-		
-		#calculate normalized SSE
-		predictedY = []
-		
-		for i in X:
-			temp = np.matrix(i)
-			temp = np.transpose(temp)
-			predictedY.append(np.matmul(w, temp))
-		
-		sum = 0;
-		for i in range(0, len(Y)):
-			sum= sum + ((Y[i] - predictedY[i])*(Y[i] - predictedY[i]))
-			
-		n = len(Y)
-		print sum/n
-		
-def linearRegressionTrainingNoDummy():
-	file = open("housing_train.txt", "r")
-	fileStr = file.read()
-	file.close()
-	fileStrs = fileStr.split('\n')
-
-	#clear empty lines
-	fileStrs = [elem for elem in fileStrs if elem != ""]
-			
-	# clear empty strings
-	X = []
-	Y = []
-	for i in fileStrs:
-		tempDataStr = i.split(" ")
-		tempDataStr = [float(elem) for elem in tempDataStr if elem != ""]
-		X.append(tempDataStr[0:-1])
-		Y.append(tempDataStr[-1])
-
-	X = np.matrix(X)
-	Y = np.transpose(np.matrix(Y))
-	Xt = np.transpose(X)
-	XtX = np.matmul(Xt,X)
-	XtXinv = inv(XtX)
-	XtY = np.matmul(Xt, Y)
-	w = np.matmul(XtXinv, XtY)
-	print "Weight vectors:"
-	print w
-	return w
-
-def calcNoDummyTrainingSSE(w):
-	files = ["housing_train.txt", "housing_test.txt"]
-	w = np.transpose(w)
-	for index in range(2):
-		file = open(files[index], "r")
-		fileStr = file.read()
-		fileStrs = fileStr.split('\n')
-		
-		#clear empty lines
-		fileStrs = [elem for elem in fileStrs if elem != ""]
-		
-		# clear empty strings
-		X = []
-		Y = []
-		for i in fileStrs:
-			tempDataStr = i.split(" ")
-			tempDataStr = [float(elem) for elem in tempDataStr if elem != ""]
-			X.append(tempDataStr[0:-1])
-			Y.append(tempDataStr[-1])
-		
-		#calculate normalized SSE
-		predictedY = []
-		
-		for i in X:
-			temp = np.matrix(i)
-			temp = np.transpose(temp)
-			predictedY.append(np.matmul(w, temp))
-		
-		sum = 0;
-		for i in range(0, len(Y)):
-			sum= sum + ((Y[i] - predictedY[i])*(Y[i] - predictedY[i]))
-			
-		n = len(Y)
-		print sum/n
-	
 def main():
-	w = linearRegressionTraining()
-	calcTrainingSSE(w)
-	w = linearRegressionTrainingNoDummy()
-	calcNoDummyTrainingSSE(w)
-	
-	
+    # Linear regression with dummy variable
+    print "====== With Dummy Variable ======"
+    w = train(True)
+    calcASE(w, True)
+    # Linear regression without dummy variable
+    print "====== Without Dummy Variable ======"
+    w = train(False)
+    calcASE(w, False)
+
+def train(dummyVar):
+    inputData = loadData("./data/housing_train.txt")
+
+    # load data into matrix X and Y
+    if dummyVar:
+        X = np.insert(inputData[:, 0:-1], 0, 1, axis=1)
+    else:
+        X = inputData[:, 0:-1]
+
+    Y = inputData[:, -1]
+
+    w = calcWeight(X, Y)
+
+    print "Weight vector:"
+    print w
+    return w
+
+def calcASE(w, dummyVar):
+    # calculate ASE for training & test data
+    files = ["./data/housing_train.txt", "./data/housing_test.txt"]
+    names = ["Training data ASE: ", "Testing data ASE: "]
+    w = np.transpose(w)
+
+    for idx, f in enumerate(files):
+        inputData = loadData(f)
+
+        if dummyVar:
+            X = np.insert(inputData[:, 0:-1], 0, 1, axis=1)
+        else:
+            X = inputData[:, 0:-1]
+        Y = inputData[:, -1]
+
+        result = np.dot(X, w)
+        squaredDiffs = (result - Y) ** 2
+        SSE = sum(squaredDiffs)
+        ASE = SSE / len(squaredDiffs)
+
+        print names[idx]
+        print ASE
+
+
+def loadData(path):
+    # load data from file and return data matrix
+    file = open(path, "r")
+    data = np.genfromtxt(file, delimiter=" ")
+    return data
+
+def calcWeight(X, Y):
+    # calculate weight vector
+    Xt = np.transpose(X)
+    a = np.linalg.inv(np.matmul(Xt, X))
+    b = np.matmul(Xt, Y)
+    w = np.matmul(a, b)
+    return w
+
+
 if __name__ == "__main__":
 	main()
-	
