@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
 """
@@ -18,6 +19,7 @@ def logisticTraining():
 	# load data into matrix X and Y
 	X = inputData[:, 0:-1]
 	Y = inputData[:, -1]
+
 	trainASE, testASE = batchLearn(X, Y)
 	print trainASE
 	print testASE
@@ -25,14 +27,15 @@ def logisticTraining():
 
 def batchLearn(X, Y):
 	# get number of independent variables
-	n = X.shape[1]
-	w = np.zeros(n)
+	n = X.shape[0]
+	features = X.shape[1]
+	w = np.zeros(features)
 	trainASE = []
 	testASE = []
 
-	cond = 10
+	cond = 100
 	while(cond != 0):
-		gradient = np.zeros(n)
+		gradient = np.zeros(features)
 		for i in range(n):
 			result = 1 / (1 + np.exp(-1 * np.dot(np.transpose(w), X[i])))
 			gradient += np.dot(result - Y[i], X[i])
@@ -49,24 +52,32 @@ def calcError(path, w):
 	X = inputData[:, 0:-1]
 	Y = inputData[:, -1]
 
+	n = X.shape[0]
 	result = np.dot(X, w)
-	squaredDiffs = (result - Y) ** 2
-	SSE = sum(squaredDiffs)
-	ASE = SSE / len(squaredDiffs)
+	count = 0
+	idx = 0
 
-	return ASE
+	for item in np.nditer(result):
+		approx = 0
+		if item >= 0.5:
+			approx = 1
+		if Y[idx] == approx:
+			count += 1
+		idx += 1
+
+	accuracy = count / (n * 1.0)
+	return accuracy
 
 def plotErrors(trainASE, testASE):
 	# plot training error
-	plt.plot(trainASE)
+	plt.plot(trainASE, label="training data")
 	plt.xlabel('# of Iterations')
-	plt.ylabel('Training Data ASE')
-	plt.savefig('trainingDataError.png')
+	plt.ylabel('Accuracy')
 	#plot testing error
-	plt.plot(testASE)
+	plt.plot(testASE, label="testing data")
 	plt.xlabel('# of Iterations')
-	plt.ylabel('Testing Data ASE')
-	plt.savefig('testingDataError.png')
+	plt.ylabel('Accuracy')
+	plt.savefig('trainingAccuracy.png')
 
 
 def loadData(path):
