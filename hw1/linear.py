@@ -1,4 +1,8 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 """
 Linear Regression Training
@@ -6,13 +10,14 @@ Linear Regression Training
 
 def main():
     # Linear regression with dummy variable
-    print "====== With Dummy Variable ======\n"
-    w = train(True)
-    calcASE(w, True)
+    print "\n====== With Dummy Variable ======\n"
+    train(True)
     # Linear regression without dummy variable
-    print "====== Without Dummy Variable ======\n"
-    w = train(False)
-    calcASE(w, False)
+    print "\n====== Without Dummy Variable ======\n"
+    train(False)
+
+    print "\n====== Training with normal distributed random data ======\n"
+    normDataTrain()
 
 def train(dummyVar):
     inputData = loadData("./data/housing_train.txt")
@@ -29,7 +34,46 @@ def train(dummyVar):
 
     print "Weight vector:"
     print w
-    return w
+
+    calcASE(w, dummyVar)
+
+def normDataTrain():
+    trainASE = []
+    testASE = []
+    dRange = 52
+
+    for d in range(0, dRange, 2):
+        inputData = loadData("./data/housing_train.txt")
+        X = np.insert(inputData[:, 0:-1], 0, 1, axis=1)
+        Y = inputData[:, -1]
+        n = X.shape[0]
+
+        inputData = loadData("./data/housing_test.txt")
+        testX = np.insert(inputData[:, 0:-1], 0, 1, axis=1)
+        testY = inputData[:, -1]
+        testN = testX.shape[0]
+
+        # add random data from normal distribution
+        for i in range(d):
+            mu = np.random.rand() * 1000 + 1000
+            sigma = np.random.rand() * 1000 + 1000
+            normalData = np.array(np.random.normal(mu, sigma, n))
+
+            X = np.insert(X, X.shape[1], normalData, axis=1)
+            normalTestingData = np.random.normal(mu, sigma, testN)
+            testX = np.insert(testX, testX.shape[1], normalTestingData, axis=1)
+
+        w = calcWeight(X, Y)
+        trainASE.append(calcASEwithNorm(X, Y, w))
+        testASE.append(calcASEwithNorm(testX, testY, w))
+
+    print "Training ASE:"
+    print trainASE
+    print "Testing ASE:"
+    print testASE
+
+    plotASE(trainASE, testASE, range(0, dRange, 2))
+
 
 def calcASE(w, dummyVar):
     # calculate ASE for training & test data
@@ -53,6 +97,24 @@ def calcASE(w, dummyVar):
 
         print names[idx]
         print ASE
+
+def calcASEwithNorm(X, Y, w):
+    result = np.dot(X, w)
+    squaredDiffs = (result - Y) ** 2
+    SSE = sum(squaredDiffs)
+    ASE = SSE / len(squaredDiffs)
+    return ASE
+
+def plotASE(trainASE, testASE, dRange):
+    # plot training error
+	plt.plot(dRange, trainASE, label="training data")
+	plt.xlabel('d Value')
+	plt.ylabel('ASE')
+	#plot testing error
+	plt.plot(dRange, testASE, label="testing data")
+	plt.xlabel('d Value')
+	plt.ylabel('ASE')
+	plt.savefig('NormDataASE.png')
 
 
 def loadData(path):
