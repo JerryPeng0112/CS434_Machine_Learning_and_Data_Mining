@@ -8,10 +8,12 @@ import matplotlib.pyplot as plt
 Logistic Regression Training
 """
 
-LEARNING_RATE = 0.000000001
+LEARNING_RATE = 0.0001
+LEARNING_RATE_REGULAR = 0.000005
 
 def main():
 	logisticTraining()
+	regularizedTraining()
 
 def logisticTraining():
 	inputData = loadData("./data/usps-4-9-train.csv")
@@ -20,18 +22,36 @@ def logisticTraining():
 	X = inputData[:, 0:-1] / 255
 	Y = inputData[:, -1]
 
-	trainASE, testASE = batchLearn(X, Y)
-	print trainASE
-	print testASE
-	plotErrors(trainASE, testASE)
+	trainAccuracy, testAccuracy = batchLearn(X, Y)
+	print "Training accuracies throughout iterations: "
+	print trainAccuracy
+	print "Testing accuracies throughout iterations: "
+	print testAccuracy
+	plotErrors(trainAccuracy, testAccuracy)
+
+def regularizedTraining():
+	inputData = loadData("./data/usps-4-9-train.csv")
+
+	# load data into matrix X and Y
+	X = inputData[:, 0:-1] / 255
+	Y = inputData[:, -1]
+
+	lamb, trainAccuracy, testAccuracy = regularizedBatchLearn(X, Y)
+	print "lambda values: "
+	print lamb
+	print "Training data accuracies: "
+	print trainAccuracy
+	print "Testing data accuracies: "
+	print testAccuracy
 
 def batchLearn(X, Y):
 	# get number of independent variables
+	print "\n====== Batch Learning ======\n"
 	n = X.shape[0]
 	features = X.shape[1]
 	w = np.zeros(features)
-	trainASE = []
-	testASE = []
+	trainAccuracy = []
+	testAccuracy = []
 
 	cond = 100
 	while(cond != 0):
@@ -41,11 +61,45 @@ def batchLearn(X, Y):
 			gradient += np.dot(result - Y[i], X[i])
 		w -= LEARNING_RATE * gradient
 		cond -= 1
-		print cond
-		trainASE.append(calcError("./data/usps-4-9-train.csv", w))
-		testASE.append(calcError("./data/usps-4-9-test.csv", w))
+		trainAccuracy.append(calcError("./data/usps-4-9-train.csv", w))
+		testAccuracy.append(calcError("./data/usps-4-9-test.csv", w))
 
-	return trainASE, testASE
+	return trainAccuracy, testAccuracy
+
+def regularizedBatchLearn(X, Y):
+	# get number of independent variables
+
+	print "\n====== Regularized Batch Learning ======\n"
+
+	lamb = []
+	for i in range(-3, 4, 1):
+		lamb.append(10 ** i)
+	lamb = np.array(lamb)
+
+	trainAccuracy = []
+	testAccuracy = []
+	iter = 1
+
+	for item in np.nditer(lamb):
+		n = X.shape[0]
+		features = X.shape[1]
+		w = np.zeros(features)
+
+		cond = 100
+		while(cond != 0):
+			gradient = np.zeros(features)
+			for i in range(n):
+				result = 1 / (1 + np.exp(-1 * np.dot(np.transpose(w), X[i])))
+				gradient += (np.dot(result - Y[i], X[i]) + item * w)
+			w -= LEARNING_RATE_REGULAR * gradient
+			cond -= 1
+
+		trainAccuracy.append(calcError("./data/usps-4-9-train.csv", w))
+		testAccuracy.append(calcError("./data/usps-4-9-test.csv", w))
+		print "Regularized Batch Learning: with lambda"
+		print item
+
+	return lamb, trainAccuracy, testAccuracy
 
 def calcError(path, w):
 	inputData = loadData(path)
@@ -68,13 +122,13 @@ def calcError(path, w):
 	accuracy = count / (n * 1.0)
 	return accuracy
 
-def plotErrors(trainASE, testASE):
+def plotErrors(trainAccuracy, testAccuracy):
 	# plot training error
-	plt.plot(trainASE, label="training data")
+	plt.plot(trainAccuracy, label="training data")
 	plt.xlabel('# of Iterations')
 	plt.ylabel('Accuracy')
 	#plot testing error
-	plt.plot(testASE, label="testing data")
+	plt.plot(testAccuracy, label="testing data")
 	plt.xlabel('# of Iterations')
 	plt.ylabel('Accuracy')
 	plt.savefig('trainingAccuracy.png')
