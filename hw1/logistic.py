@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 Logistic Regression Training
 """
 
-LEARNING_RATE = 0.0001
-LEARNING_RATE_REGULAR = 0.000005
+LEARNING_RATE = 0.001
+LEARNING_RATE_REGULAR = 0.0000001
 
 def main():
 	logisticTraining()
@@ -60,6 +60,7 @@ def batchLearn(X, Y):
 			result = 1 / (1 + np.exp(-1 * np.dot(np.transpose(w), X[i])))
 			gradient += np.dot(result - Y[i], X[i])
 		w -= LEARNING_RATE * gradient
+		print str(cond) + " loops to go"
 		cond -= 1
 		trainAccuracy.append(calcError("./data/usps-4-9-train.csv", w))
 		testAccuracy.append(calcError("./data/usps-4-9-test.csv", w))
