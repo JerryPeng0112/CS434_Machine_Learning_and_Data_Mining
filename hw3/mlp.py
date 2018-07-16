@@ -43,7 +43,7 @@ def main():
     # Training functions
     #sigmoidTrain(cuda, trainData, validateData, testData)
     #reluTrain(cuda, trainData, validateData, testData)
-    #optimizedReluTrain(cuda, trainData, validateData, testData)
+    optimizedReluTrain(cuda, trainData, validateData, testData)
     threeLayerReluTrain(cuda, trainData, validateData)
 
 
